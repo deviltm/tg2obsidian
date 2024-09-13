@@ -23,9 +23,11 @@ import config
 
 class Note:
     def __init__(self,
+                 title = "",
                  text = "",
                  date = dt.now().strftime('%Y-%m-%d'),
                  time = dt.now().strftime('%H:%M:%S')):
+        self.title = title
         self.text = text
         self.date = date
         self.time = time
@@ -83,6 +85,7 @@ async def handle_voice_message(message: Message):
     try:
         note_stt = await stt(file_full_path)
         note.text = note_stt
+        note.title = note_stt[:16]
     except Exception as e:
         await answer_message(message, f'🤷‍♂️ {e}')
     try:
@@ -126,6 +129,7 @@ async def handle_audio(message: Message):
         file_details = bold(message.audio.file_name)
 
     note.text = f'{file_details}\n{note_stt}'
+    note.title = note.text[:16]
     save_message(note)
     os.remove(file_full_path)
 
@@ -182,10 +186,12 @@ async def handle_document(message: Message):
             file_details = bold(file_name)
 
         note.text = f'{file_details}\n{note_stt}'
+        note.title = note.text[:16]
         os.remove(file_full_path)
     else:
         forward_info = get_forward_info(message)
         note.text = f'{forward_info}[[{file_name}]]\n{await get_formatted_caption(message)}'
+        note.title = f'{file_name}'
 
     save_message(note)
 
@@ -198,6 +204,7 @@ async def handle_contact(message: Message):
     note = note_from_message(message)
     print(f'Got contact')
     note.text = await get_contact_data(message)
+    note.title = note.text[:16]
     save_message(note)
 
 
@@ -209,6 +216,7 @@ async def handle_location(message: Message):
     print(f'Got location')
     note = note_from_message(message)
     note.text = get_location_note(message)
+    note.title = note.text[:16]
     save_message(note)
 
 
@@ -227,6 +235,7 @@ async def handle_animation(message: Message):
 
     forward_info = get_forward_info(message)
     note.text = f'{forward_info}![[{file_name}]]\n{await get_formatted_caption(message)}'
+    note.title = f'{file_name}'
     save_message(note)
 
 
@@ -244,6 +253,7 @@ async def handle_video(message: Message):
     await handle_file(file=file, file_name=file_name, path=config.photo_path)
 
     note.text = f'{get_forward_info(message)}![[{file_name}]]\n{await get_formatted_caption(message)}'
+    note.title = f'{await get_formatted_caption(message)}'[:16]
     save_message(note)
 
 
@@ -273,6 +283,7 @@ async def process_message(message: types.Message):
     message_body = await embed_formatting(message)
     forward_info = get_forward_info(message)
     note.text = forward_info + message_body
+    note.title = message_body[:16]
     save_message(note)
 
 
@@ -348,14 +359,20 @@ def log_message(message):
         log_debug(f'Message content saved to {file_name}')
 
 
-def get_note_file_name_parts(curr_date):
-    filename_part1 = config.note_prefix if 'note_prefix' in dir(config) else ''
-    filename_part3 = config.note_postfix if 'note_postfix' in dir(config) else ''
+def get_note_file_name_parts(note_text, curr_date):
+    if 'use_note_body' in dir(config) and config.use_note_body is True :
+        filename_part1 = note_text[:16] if note_text else ''
+        filename_part3 = ' '
+    else :
+        filename_part1 = config.note_prefix if 'note_prefix' in dir(config) else ''
+        filename_part3 = config.note_postfix if 'note_postfix' in dir(config) else ''
+
     filename_part2 = curr_date if 'note_date' in dir(config) and config.note_date is True else ''
+
     return [filename_part1, filename_part2, filename_part3]
 
-def get_note_name(curr_date) -> str:
-    parts = get_note_file_name_parts(curr_date)
+def get_note_name(note_text, curr_date) -> str:
+    parts = get_note_file_name_parts(note_text, curr_date)
     return os.path.join(config.inbox_path, ''.join(parts) + '.md')
 
 
@@ -399,7 +416,7 @@ def save_message(note: Note) -> None:
         # Keep line breaks and add a header with a time stamp
         note_body = check_if_task(check_if_negative(note.text))
         note_text = f'#### [[{curr_date}]] {curr_time}\n{note_body}\n\n'
-    with open(get_note_name(curr_date), 'a', encoding='UTF-8') as f:
+    with open(get_note_name(note.title, curr_date), 'a', encoding='UTF-8') as f:
         f.write(note_text)
 
 def check_if_task(note_body) -> str:
