@@ -33,9 +33,9 @@ This readme is also available [in Russian](README.ru.md).
 2. install script dependencies:
 
 ```shell
-pip install aiogram
-pip install beautifulsoup4
-pip install lxml
+pip install aiogram=2.25.2
+pip install beautifulsoup4=4.12.2
+pip install lxml=4.9.3
 ```
 
 3. Install [Whisper](https://github.com/openai/whisper) and Pytorch modules if you need voice messages get recognized to text:

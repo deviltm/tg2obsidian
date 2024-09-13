@@ -30,9 +30,11 @@
 2. Установите требуемые зависимости:
 
 ```shell
-pip install aiogram
-pip install beautifulsoup4
-pip install lxml
+pip install aiogram=2.25.2
+pip install beautifulsoup4=4.12.2
+pip install lxml=4.9.3
+или 
+pip install -r requirements.txt
 ```
 
 3. Если требуется распознавать голосовые сообщения, установите модуль [Whisper](https://github.com/openai/whisper):
@@ -69,3 +71,14 @@ python tg2obsidian_bot.py
 Если вы хотите поблагодарить автора этого проекта, ваши донаты с благодарностью будут приняты здесь: https://pay.cloudtips.ru/p/1f9bf82f
 
 ![](qrCode.png)
+
+## Дополнительно добавлено
+докер файл для создания контейнера
+```
+docker build . -t tg2obsidian:latest
+
+docker run -itd --name testbot -v <yourpath>/config.py:/code/config.py -v <yourpath>:<configpath> -v <yourpath>/bot.log:/code/bot.log tg2obsidian:latest
+можно исползовать уже собранный образ
+
+docker.io/deviltm/tg2obsidian:latest
+```

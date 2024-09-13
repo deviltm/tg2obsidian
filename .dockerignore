@@ -1,0 +1,9 @@
+.idea  
+.vscode  
+.git  
+**/__pycache__  
+*.pyc  
+venv
+*.md
+*.bat
+**/__**
