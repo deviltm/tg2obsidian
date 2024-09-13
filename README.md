@@ -1,75 +1,97 @@
 # tg2obsidian
 
-This program ("Bot") uses Telegram's free bot functionality in order to save messages from a Telegram group to the [Obsidian](https://obsidian.md) vault on your local computer.
+[English](README.en.md).
 
-The Markdown markup used will also work for most [other programs](https://www.markdownguide.org/tools/) that work with local Markdown files.
+## Это **форк** проекта [tg2obsidian](https://github.com/dimonier/tg2obsidian)
 
-The Bot is designed to run locally on the computer where the Obsidian files are located.
+Для запуска без исправления под новую версию  библиотеки aiogram я добавил requirements.txt и Dockerfile чтобы запускать на сервере в контейнере.
 
-This readme is also available [in Russian](README.ru.md).
+Добавлено использование шаблона имени будущей заметки, можно использовать три параметра date, time, title где:
+Title - отрезанная часть текста сообщения присланного через телеграмм. Обрезается до 32 знаков.
+date - дата в формате DD-MM-YYYY
+time - в формате HH-MM-SS 24H
 
-## Use case
+Добавлен санитайзер имени файла созданного с помощью шаблона и уникального по параметрам.
 
-- You type, record, or forward messages to your personal Telegram group _on the go_
-- Bot receives new messages from Telegram and saves them as Inbox notes in your PKM vault
-- _Afterwards, in a quiet environment_, you process those notes, moving the information from them to appropriate places in your vault
+Поправлены создания имени файлов фото и видео.
 
-## Features
+Добавлено создание предпросмотра из каждого URL в тексте сообщения.
 
-- All messages are grouped by date — one note per day — or stored in a single note.
-- Each message in a note has a header with a date and time stamp.
-- Formatting of messages and captions is preserved or ignored depending on settings.
-- For forwarded messages, information about the origin is added.
-- Photos, animations, videos, and documents are saved to the vault and embedded in the note.
-- For contacts, YAML front matter and vcard are saved.
-- For locations, relevant links to Google and Yandex maps are created.
-- It is possible to convert notes with certain keywords into a task.
-- It is possible to tag notes with certain keywords.
-- It is possible to recognize speech from voice notes and audio messages. In this case, the Bot sends the recognized text as a response to the original message.
+Доработки функционала и оформления будут направлены в сторону соответствия плагина telegram-sync obsidian.
 
-## Set up
+Все остальные доработки под себя и друзей будут в issue. 
 
-1. Install [Python](https://python.org) 3.10+
-2. install script dependencies:
+## Всем добра далее частично правленый текст оригинала 
+
+Эта программа (далее — Бот) использует бесплатную функциональность бота Telegram для сохранения сообщений из группы Telegram в хранилище [Obsidian](https://obsidian.md) на локальном компьютере.
+
+Используемая разметка Markdown подойдёт и для большинства [других программ](https://www.markdownguide.org/tools/), работающих с локальными файлами Markdown.
+
+## Сценарий использования
+
+- Вы _на ходу_ пишете, наговариваете или пересылаете сообщения в личную группу Telegram
+- Бот получает новые сообщения из Telegram и сохраняет их в виде заметок, таким образов формируя входящий поток информации прямо в вашем хранилище заметок
+- _Позже в спокойной обстановке_ вы обрабатываете эти заметки, разнося информацию из них в подходящие места в своём хранилище
+
+## Возможности
+
+- Все сообщения группируются по датам — на одну дату создаётся одна заметка. Также возможно сохранять сообщения в одну единственную заметку.
+- Каждое сообщение в заметке имеет заголовок с отметкой даты и времени.
+- В зависимости он настроек сохраняется либо игнорируется форматирование сообщений.
+- Для пересланных сообщений добавляется информация об источнике сообщения.
+- Фотографии, анимации, видео и документы сохраняются в хранилище и встраиваются в заметку.
+- Контакты сохраняются в виде YAML front matter и vcard.
+- Для мест создаются ссылки на Google Maps и Яндекс.Карты.
+- Есть возможность преобразовывать заметки с определенными ключевыми словами в задачу.
+- Есть возможность тегировать заметки с определенными ключевыми словами.
+- Есть возможность распознавания речи из голосовых сообщений и аудиосообщений. При этом Бот отправляет распознанный текст в виде ответа на исходное сообщение.
+
+## Установка и настройка
+
+Расширенные инструкции см. на странице [extended_tg2obsidian_manual.ru](extended_tg2obsidian_manual.ru.md)
+1. Установите [Python](https://python.org) 3.10+.
+2. Установите требуемые зависимости:
 
 ```shell
 pip install aiogram=2.25.2
 pip install beautifulsoup4=4.12.2
 pip install lxml=4.9.3
+или 
+pip install -r requirements.txt
 ```
 
-3. Install [Whisper](https://github.com/openai/whisper) and Pytorch modules if you need voice messages get recognized to text:
+3. Если требуется распознавать голосовые сообщения, установите модуль [Whisper](https://github.com/openai/whisper):
 
 ```shell
 pip install -U openai-whisper
-pip install torch
 ```
 
-4. Install compiled [FFMPEG](https://ffmpeg.org/download.html) and add the path to the executable (in Windows — ffmpeg.exe) to the `path` environment variable. Go to the folder containing this script and make sure that `ffmpeg.exe` could be started there.
-5. Create your own bot using https://t.me/BotFather
-6. Paste the token received from `@botfather` into the appropriate parameter in `config.py` and change the rest of the parameters in `config.py` as desired.
-7. (Optional) Add the bot created above to a private Telegram group and make it administrator so it can read messages.
+4. Установите скомпилированный [FFMPEG](https://ffmpeg.org/download.html) и добавьте путь к исполняемому файлу (в Windows - ffmpeg.exe) в переменную окружения path. Перейдите в папку с данным скриптом и убедитесь, что ffmpeg.exe запускается из неё.
+5. Создайте своего бота при помощи https://t.me/BotFather
+6. Вставьте токен, полученный от `@botfather`, в соответствующую переменную в файле `config.py` и измените остальные параметры в `config.py` требуемым образом.
+7. (Не обязательно). Добавьте созданного выше бота в приватную группу Telegram и сделайте администратором, чтобы он мог читать сообщения.
 
-## Usage
+## Использование
 
-1. Send or forward messages that should go to your Obsidian vault to the private Telegram group or directly to your Telegram bot.
+1. Отправляйте/пересылайте сообщения, которые должны попасть в ваше хранилище Obsidian, в свою приватную группу Telegram или напрямую вашему боту.
 
-2. Run Bot:
-```shell.
+2. Запустите Бота:
+```shell
 python tg2obsidian_bot.py
 ```
 
-- You can keep Bot running indefinitely on a computer or server that is permanently turned on. In this case, it will recognize speech and create/update notes in Obsidian in real time.
-- If you only turn your computer on when you're using it, run Bot directly when you need to get Obsidian messages, and close the program when you've received all the messages.
+- На постоянно работающем компьютере или на сервере Бота можно не выключать. Тогда он будет распознавать речь и заносить заметки в Obsidian в реальном времени.
+- Если вы включаете компьютер только на время использования, запускайте Бота непосредственно тогда, когда нужно получить сообщения в Obsidian, а после получения всех сообщений закрывайте программу.
 
-**Important!** Bot can only retrieve messages for the last 24 hours. Messages sent earlier and not retrieved in a timely manner will not be received by Bot and saved in the vault.
+**Важно!** Бот может получить сообщения только за последние 24 часа. Если от момента отправки сообщения до запуска Бота прошло более 24 часов, такое сообщение уже не будет получено Ботом.
 
-## Known issues
+## Дополнительно добавлено
+докер файл для создания контейнера
+```
+docker build . -t tg2obsidian:latest
 
-Check in the [Issues](https://github.com/dimonier/tg2obsidian/issues?q=is%3Aopen+is%3Aissue+label%3Abug) section.
+docker run -itd --name testbot -v <yourpath>/config.py:/code/config.py -v <yourpath>:<configpath> -v <yourpath>/bot.log:/code/bot.log tg2obsidian:latest
+можно исползовать уже собранный образ
 
-## Support author
-
-If you would like to thank the author of this project, your donations will be gratefully accepted here: https://pay.cloudtips.ru/p/1f9bf82f
-
-![](qrCode.png)
+docker.io/deviltm/tg2obsidian:latest
+```

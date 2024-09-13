@@ -2,10 +2,10 @@
 token = 'xxxxxxxx:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
 
 # Path to the folder where new notes should be created
-inbox_path = r'C:\your-obsidian-vault'
+inbox_path = r'/obsidian'
 
 # Path to the folder where received pictures should be stored
-photo_path = r'C:\your-obsidian-vault\attachments'
+photo_path = r'/obsidian/attachments'
 
 # If True, messages (including picture captions) will retain formatting (bold, italic, links, etc.)
 # If False, messages will be saved as plain text. This also removes inline links.
@@ -33,9 +33,10 @@ whisper_model = 'medium'
 # To omit either prefix or postfix (or both), comment out corresponding option with # or edit it to be empty.
 # To omit the date part and always put new messages in a single static file, comment out note_date option
 # or edit it to be empty.
-note_prefix = 'Telegram-'
-note_date = True
-note_postfix = '_Notes'
+
+# note_name_template = 'Telegram-{date}_Notes'
+# note_name_template = 'Telegram-Notes'
+note_name_template = '{title}-{date}'
 
 # The following parameter sets logging level:
 # 0 - Disable any logging. The only traces of the program are notes and files in the vault.

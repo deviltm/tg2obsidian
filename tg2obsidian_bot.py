@@ -141,15 +141,18 @@ async def handle_photo(message: Message):
     log_message(message)
     note = note_from_message(message)
     photo = message.photo[-1]
-    file_name = unique_indexed_filename(create_media_file_name(message, 'pic', 'jpg'), config.photo_path) # or photo.file_id + '.jpg'
+    caption = await get_formatted_caption(message)
+    name_photo = str(caption if caption else message.photo[0].file_unique_id if message.photo[0].file_unique_id else 'photo-')
+    file_name = unique_indexed_filename(create_media_file_name(name_photo, 'pic', 'jpg'), config.photo_path) # or photo.file_id + '.jpg'
     print(f'Got photo: {file_name}')
     photo_file = await photo.get_file()
 
     await handle_file(file=photo_file, file_name=file_name, path=config.photo_path)
 
     forward_info = get_forward_info(message)
-    photo_and_caption = f'{forward_info}![[{file_name}]]\n{await get_formatted_caption(message)}'
+    photo_and_caption = f'{forward_info}![[{file_name}]]\n{caption}'
     note.text=photo_and_caption
+    note.title=name_photo
     save_message(note)
 
 @dp.message_handler(content_types=[ContentType.DOCUMENT])
@@ -243,7 +246,9 @@ async def handle_animation(message: Message):
 async def handle_video(message: Message):
 #    if message.chat.id != config.my_chat_id: return
     log_message(message)
-    file_name = unique_filename(message.video.file_name, config.photo_path)
+    name_video = message.video_note if message.video_note else message.video.file_name if message.video.file_name else message.caption
+    #file_name = unique_filename(message.video.file_name, config.photo_path)
+    file_name = unique_indexed_filename(create_media_file_name(name_video, 'video_note', 'mp4'), config.photo_path)
     log_basic(f'Received video {file_name} from @{message.from_user.username}')
     print(f'Got video: {file_name}')
     note = note_from_message(message)
@@ -253,7 +258,7 @@ async def handle_video(message: Message):
     await handle_file(file=file, file_name=file_name, path=config.photo_path)
 
     note.text = f'{get_forward_info(message)}![[{file_name}]]\n{await get_formatted_caption(message)}'
-    note.title = f'{await get_formatted_caption(message)}'[:16]
+    note.title = note.text[:32]
     save_message(note)
 
 
@@ -261,7 +266,9 @@ async def handle_video(message: Message):
 async def handle_video_note(message: Message):
 #    if message.chat.id != config.my_chat_id: return
     log_message(message)
-    file_name = unique_indexed_filename(create_media_file_name(message.video_note, 'video_note', 'mp4'), config.photo_path)
+    name_video = message.video_note if message.video_note else message.video.file_name if message.video.file_name else message.caption
+    #file_name = unique_filename(message.video.file_name, config.photo_path)
+    file_name = unique_indexed_filename(create_media_file_name(name_video, 'video_note', 'mp4'), config.photo_path)
     log_basic(f'Received video note from @{message.from_user.username}')
     print(f'Got video note: {file_name}')
     note = note_from_message(message)
@@ -283,7 +290,7 @@ async def process_message(message: types.Message):
     message_body = await embed_formatting(message)
     forward_info = get_forward_info(message)
     note.text = forward_info + message_body
-    note.title = message_body[:16]
+    note.title = message_body[:32]
     save_message(note)
 
 
@@ -359,34 +366,25 @@ def log_message(message):
         log_debug(f'Message content saved to {file_name}')
 
 
-def get_note_file_name_parts(note_text, curr_date):
-    if 'use_note_body' in dir(config) and config.use_note_body is True :
-        filename_part1 = note_text[:16] if note_text else ''
-        filename_part3 = ' '
-    else :
-        filename_part1 = config.note_prefix if 'note_prefix' in dir(config) else ''
-        filename_part3 = config.note_postfix if 'note_postfix' in dir(config) else ''
-
-    filename_part2 = curr_date if 'note_date' in dir(config) and config.note_date is True else ''
-
-    return [filename_part1, filename_part2, filename_part3]
-
 def get_note_name(note_text, curr_date) -> str:
-    parts = get_note_file_name_parts(note_text, curr_date)
-    return os.path.join(config.inbox_path, ''.join(parts) + '.md')
+
+    note_name = config.note_name_template.format(date=curr_date, title=note_text[:32])
+    return os.path.join(config.inbox_path, note_name + '.md')
+#    parts = get_note_file_name_parts(note_text, curr_date)
+#    return os.path.join(config.inbox_path, ''.join(parts) + '.md')
 
 
-def create_media_file_name(message: Message, suffix = 'media', ext = 'jpg') -> str:
+def create_media_file_name(prefix = 'media', suffix = 'media', ext = 'jpg') -> str:
     # ToDo: переделать на дату отправки сообщения
     curr_date = get_curr_date()
-    parts = get_note_file_name_parts(curr_date)
+    #parts = get_note_file_name_parts(curr_date)
     # ToDo: добавить в имя файлаusername исходного канала или пользователя
     # Если присутствует forward_from - оттуда, иначе из from
 
     # Строим среднюю часть имени без лишних - и _
-    note_name = re.sub("[-_]+", "-", f'{parts[0]}{parts[2]}'.strip('-_'))
-
-    return f'{curr_date}_{note_name}_{suffix}.{ext}'
+    #note_name = re.sub("[-_]+", "-", f'{parts[0]}{parts[2]}'.strip('-_'))
+    note_name = config.note_name_template.format(date=curr_date, title=prefix[:32])
+    return f'{note_name}_{suffix}.{ext}'
 
 
 def get_curr_date() -> str:
